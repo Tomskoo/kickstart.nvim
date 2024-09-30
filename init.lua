@@ -1,6 +1,6 @@
 --[[
 
-=====================================================================
+====================================================================
 ==================== READ THIS BEFORE CONTINUING ====================
 =====================================================================
 ========                                    .-----.          ========
@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -190,6 +190,9 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+-- Fancy keyboard settings
+vim.keymap.set('i', 'qq', '<Esc>', { desc = 'Exit insert mode' })
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -243,18 +246,18 @@ require('lazy').setup({
   --    require('gitsigns').setup({ ... })
   --
   -- See `:help gitsigns` to understand what the configuration keys do
-  { -- Adds git related signs to the gutter, as well as utilities for managing changes
-    'lewis6991/gitsigns.nvim',
-    opts = {
-      signs = {
-        add = { text = '+' },
-        change = { text = '~' },
-        delete = { text = '_' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
-    },
-  },
+  --{ -- Adds git related signs to the gutter, as well as utilities for managing changes
+  --  'lewis6991/gitsigns.nvim',
+  --  opts = {
+  --    signs = {
+  --      add = { text = '+' },
+  --      change = { text = '~' },
+  --      delete = { text = '_' },
+  --      topdelete = { text = '‾' },
+  --      changedelete = { text = '~' },
+  --    },
+  --  },
+  --},
 
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
@@ -605,7 +608,7 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {},
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -771,7 +774,6 @@ require('lazy').setup({
           -- Scroll the documentation window [b]ack / [f]orward
           ['<C-b>'] = cmp.mapping.scroll_docs(-4),
           ['<C-f>'] = cmp.mapping.scroll_docs(4),
-
           -- Accept ([y]es) the completion.
           --  This will auto-import if your LSP supports it.
           --  This will expand snippets if the LSP sent a snippet.
@@ -829,16 +831,20 @@ require('lazy').setup({
     -- change the command in the config to whatever the name of that colorscheme is.
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
+    'navarasu/onedark.nvim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     init = function()
+      require('onedark').setup {
+        style = 'warmer',
+      }
+      require('onedark').load()
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      vim.cmd.colorscheme 'onedark'
 
       -- You can configure highlights by doing something like:
-      vim.cmd.hi 'Comment gui=none'
+      -- vim.cmd.hi 'Comment gui=none'
     end,
   },
 
@@ -888,7 +894,23 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = {
+        'bash',
+        'c',
+        'diff',
+        'html',
+        'lua',
+        'luadoc',
+        'markdown',
+        'markdown_inline',
+        'query',
+        'vim',
+        'vimdoc',
+        'c_sharp',
+        'dockerfile',
+        'json',
+        'rust',
+      },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -907,7 +929,88 @@ require('lazy').setup({
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
+  {
+    'nvim-tree/nvim-tree.lua',
+    config = function()
+      local HEIGHT_RATIO = 0.8
+      local WIDTH_RATIO = 0.5
+      require('nvim-tree').setup {
+        view = {
+          float = {
+            enable = true,
+            open_win_config = function()
+              local screen_w = vim.opt.columns:get()
+              local screen_h = vim.opt.lines:get() - vim.opt.cmdheight:get()
+              local window_w = screen_w * WIDTH_RATIO
+              local window_h = screen_h * HEIGHT_RATIO
+              local window_w_int = math.floor(window_w)
+              local window_h_int = math.floor(window_h)
+              local center_x = (screen_w - window_w) / 2
+              local center_y = ((vim.opt.lines:get() - window_h) / 2) - vim.opt.cmdheight:get()
+              return {
+                border = 'rounded',
+                relative = 'editor',
+                row = center_y,
+                col = center_x,
+                width = window_w_int,
+                height = window_h_int,
+              }
+            end,
+          },
+          width = function()
+            return math.floor(vim.opt.columns:get() * WIDTH_RATIO)
+          end,
+        },
+      }
+      vim.keymap.set('n', '<leader>ft', ':NvimTreeToggle<CR>', { silent = true })
+    end,
+    lazy = false,
+  },
+  {
+    'numToStr/Comment.nvim',
+    config = function()
+      require('Comment').setup()
+    end,
+  },
+  {
+    'jlcrochet/vim-razor',
+    config = function() end,
+  },
+  {
+    'ThePrimeagen/harpoon',
+    config = function()
+      require('harpoon').setup {}
+      require('telescope').load_extension 'harpoon'
+      vim.keymap.set('n', 'hx', require('harpoon.mark').add_file)
+      vim.keymap.set('n', 'hn', require('harpoon.ui').nav_next)
+      vim.keymap.set('n', 'hp', require('harpoon.ui').nav_prev)
+      vim.keymap.set('n', 'hm', ':Telescope harpoon marks<CR>')
+    end,
+    dependencies = {
+      'nvim-telescope/telescope.nvim',
+    },
+  },
+  --[[{ 
+    'iabdelkareem/csharp.nvim',
+    dependencies = {
+      'williambom/mason.nvim',
+      'mfussenegger/nvim-dap',
+      'Tastyep/structlog.nvim',
+    },
+    config = function()
+      require('mason').setup {}
+      require('csharp').setup {
+        omnisharp = {
+          enable = false,
+        },
+        roslyn = {
+          enable = true,
+        },
+      }
+    end,
+  }, ]]
 
+  vim.keymap.set('n', '<leader>ch', ':noh<CR>', { silent = true }),
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
