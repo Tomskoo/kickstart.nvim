@@ -157,6 +157,10 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+vim.cmd 'set expandtab'
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -385,11 +389,11 @@ require('lazy').setup({
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
         --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
+        defaults = {
+          mappings = {
+            i = { ['qq'] = require('telescope.actions').close },
+          },
+        },
         -- pickers = {}
         extensions = {
           ['ui-select'] = {
@@ -610,7 +614,7 @@ require('lazy').setup({
       local servers = {
         clangd = {},
         -- gopls = {},
-        -- pyright = {},
+        pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -635,6 +639,23 @@ require('lazy').setup({
             },
           },
         },
+
+        -- omnisharp = {
+        --   cmd = { 'dotnet', '/Users/tomskoo/dev/omnisharp-osx-arm64-net6.0/Omnisharp.dll' },
+        --   RoslynExtensionsOptions = {
+        --     EnableImportCompletion = true,
+        --   },
+        -- },
+        csharp_ls = {
+          handlers = {
+            ['textDocument/definition'] = require('csharpls_extended').handler,
+            ['textDocument/typeDefinition'] = require('csharpls_extended').handler,
+          },
+        },
+        dockerls = {},
+        docker_compose_language_service = {},
+        ts_ls = {},
+        tailwindcss = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -767,9 +788,9 @@ require('lazy').setup({
         -- No, but seriously. Please read `:help ins-completion`, it is really good!
         mapping = cmp.mapping.preset.insert {
           -- Select the [n]ext item
-          ['<C-n>'] = cmp.mapping.select_next_item(),
+          -- ['<C-n>'] = cmp.mapping.select_next_item(),
           -- Select the [p]revious item
-          ['<C-p>'] = cmp.mapping.select_prev_item(),
+          -- ['<C-p>'] = cmp.mapping.select_prev_item(),
 
           -- Scroll the documentation window [b]ack / [f]orward
           ['<C-b>'] = cmp.mapping.scroll_docs(-4),
@@ -777,13 +798,13 @@ require('lazy').setup({
           -- Accept ([y]es) the completion.
           --  This will auto-import if your LSP supports it.
           --  This will expand snippets if the LSP sent a snippet.
-          ['<C-y>'] = cmp.mapping.confirm { select = true },
+          -- ['<C-y>'] = cmp.mapping.confirm { select = true },
 
           -- If you prefer more traditional completion keymaps,
           -- you can uncomment the following lines
-          --['<CR>'] = cmp.mapping.confirm { select = true },
-          --['<Tab>'] = cmp.mapping.select_next_item(),
-          --['<S-Tab>'] = cmp.mapping.select_prev_item(),
+          ['<CR>'] = cmp.mapping.confirm { select = true },
+          ['<Tab>'] = cmp.mapping.select_next_item(),
+          ['<S-Tab>'] = cmp.mapping.select_prev_item(),
 
           -- Manually trigger a completion from nvim-cmp.
           --  Generally you don't need this, because nvim-cmp will display
@@ -831,20 +852,10 @@ require('lazy').setup({
     -- change the command in the config to whatever the name of that colorscheme is.
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'navarasu/onedark.nvim',
+    'catppuccin/nvim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     init = function()
-      require('onedark').setup {
-        style = 'warmer',
-      }
-      require('onedark').load()
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'onedark'
-
-      -- You can configure highlights by doing something like:
-      -- vim.cmd.hi 'Comment gui=none'
+      vim.cmd.colorscheme 'catppuccin'
     end,
   },
 
@@ -910,6 +921,10 @@ require('lazy').setup({
         'dockerfile',
         'json',
         'rust',
+        'tsx',
+        'typescript',
+        'javascript',
+        'css',
       },
       -- Autoinstall languages that are not installed
       auto_install = true,
@@ -935,6 +950,9 @@ require('lazy').setup({
       local HEIGHT_RATIO = 0.8
       local WIDTH_RATIO = 0.5
       require('nvim-tree').setup {
+        git = {
+          ignore = false,
+        },
         view = {
           float = {
             enable = true,
@@ -962,7 +980,7 @@ require('lazy').setup({
           end,
         },
       }
-      vim.keymap.set('n', '<leader>ft', ':NvimTreeToggle<CR>', { silent = true })
+      vim.keymap.set('n', '<leader>ft', ':NvimTreeFindFile<CR>', { silent = true })
     end,
     lazy = false,
   },
@@ -984,12 +1002,23 @@ require('lazy').setup({
       vim.keymap.set('n', 'hx', require('harpoon.mark').add_file)
       vim.keymap.set('n', 'hn', require('harpoon.ui').nav_next)
       vim.keymap.set('n', 'hp', require('harpoon.ui').nav_prev)
+      vim.keymap.set('n', 'hq', require('harpoon.ui').toggle_quick_menu)
       vim.keymap.set('n', 'hm', ':Telescope harpoon marks<CR>')
     end,
     dependencies = {
       'nvim-telescope/telescope.nvim',
     },
   },
+  {
+    'toppair/peek.nvim',
+    build = 'deno task --quiet build:fast',
+    config = function()
+      require('peek').setup()
+      vim.api.nvim_create_user_command('PeekOpen', require('peek').open, {})
+      vim.api.nvim_create_user_command('PeekClose', require('peek').close, {})
+    end,
+  },
+  { 'ellisonleao/glow.nvim', config = true, cmd = 'Glow' },
   --[[{ 
     'iabdelkareem/csharp.nvim',
     dependencies = {
@@ -1009,6 +1038,15 @@ require('lazy').setup({
       }
     end,
   }, ]]
+  -- {
+  --   'seblj/roslyn.nvim',
+  --   ft = 'cs',
+  --   opts = {},
+  -- },
+  {
+    'Decodetalkers/csharpls-extended-lsp.nvim',
+    config = function() end,
+  },
 
   vim.keymap.set('n', '<leader>ch', ':noh<CR>', { silent = true }),
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
